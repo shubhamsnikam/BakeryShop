@@ -4,6 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useReactToPrint } from 'react-to-print';
 import InvoicePreview from './InvoicePreview';
+import html2pdf from 'html2pdf.js'; 
 
 const SalesForm = () => {
   const [products, setProducts] = useState([]);
@@ -119,10 +120,18 @@ const SalesForm = () => {
     setTotalAmount(0);
   };
 
-  const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
-    documentTitle: `Invoice_${invoiceNo}`,
-  });
+  const handleGeneratePDF = () => {
+    const element = componentRef.current;
+    const opt = {
+      margin:       0.3,
+      filename:     `Invoice_${invoiceNo}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+  
+    html2pdf().from(element).set(opt).save();
+  };
 
   const selectedCustomer = customers.find(c => c._id === customerId);
 
@@ -198,7 +207,8 @@ const SalesForm = () => {
         </div>
 
         <button type="submit" className="btn btn-success me-3">Save Sale</button>
-        <button type="button" onClick={handlePrint} className="btn btn-secondary">Print Invoice</button>
+        <button type="button" onClick={handleGeneratePDF} className="btn btn-secondary">Download Invoice PDF</button>
+
       </form>
 
       {/* Bootstrap Modal */}

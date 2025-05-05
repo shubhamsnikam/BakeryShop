@@ -10,12 +10,14 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Dashboard from './components/Dashboard';
 
+
 function App() {
   return (
     <Router>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Dashboard/>} /> {/* Set Dashboard as the default route */}
+        
+        <Route path='/' element={<Dashboard/>} />
         <Route path="/products" element={<ProductForm />} />
         <Route path="/sales" element={<SalesForm />} />
         <Route path="/customers" element={<CustomerForm />} />

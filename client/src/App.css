@@ -1,19 +1,17 @@
-@media print {
-    button, 
-    .form-label, 
-    .form-select, 
-    .btn, 
-    .form-control,
-    .d-flex.gap-2,
-    h2, form > h5,
-    label,
-    select {
-      display: none !important;
-    }
+.bakery-dashboard {
+    background-image: url('https://wallpapersok.com/images/high/aesthetic-pink-bakery-stand-f2pj7oycqjf4lbbr.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    padding: 2rem;
+    position: relative;
+  }
   
-    .invoice-print {
-      margin-top: 0;
-      box-shadow: none !important;
-    }
+  
+  .bakery-overlay {
+    background-color: rgba(255, 255, 255, 0.85); /* Soft white overlay */
+    border-radius: 15px;
+    padding: 2rem;
   }
   

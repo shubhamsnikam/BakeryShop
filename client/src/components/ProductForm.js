@@ -1,22 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import JsBarcode from 'jsbarcode';
+import jsPDF from 'jspdf';
 import { Modal, Button } from 'react-bootstrap';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const ProductForm = () => {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ name: '', quantity: '', price: '' });
-  const [editForm, setEditForm] = useState({ name: '', quantity: '', price: '' });
+  const [form, setForm] = useState({ name: '', quantity: '', price: '', expiryDate: '', manufacturingDate: '' });
+  const [editForm, setEditForm] = useState({ name: '', quantity: '', price: '', expiryDate: '', manufacturingDate: '',barcode: '' });
   const [editId, setEditId] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const barcodeRef = useRef(null);
+  const [barcodeInfo, setBarcodeInfo] = useState(null);
+  const barcodeRefs = useRef({});
 
+  // Fetch all products from the backend
   const fetchProducts = async () => {
     try {
       const res = await axios.get('/api/products');
       setProducts(res.data);
+      setTimeout(() => {
+        res.data.forEach((p) => generateBarcode(p._id));
+      }, 0);
     } catch (err) {
       console.error('Error while fetching products:', err);
       toast.error('Failed to fetch products');
@@ -35,8 +41,7 @@ const ProductForm = () => {
     e.preventDefault();
     try {
       const res = await axios.post('/api/products', form);
-      setForm({ name: '', quantity: '', price: '' });
-      generateBarcode(res.data._id);
+      setForm({ name: '', quantity: '', price: '', expiryDate: '', manufacturingDate: '' });
       fetchProducts();
       toast.success('Product Added successfully!');
     } catch (err) {
@@ -44,10 +49,11 @@ const ProductForm = () => {
       toast.error('Failed to add product');
     }
   };
+  
 
   const handleEdit = (product) => {
     setEditId(product._id);
-    setEditForm({ name: product.name, quantity: product.quantity, price: product.price });
+    setEditForm({ name: product.name, quantity: product.quantity, price: product.price, expiryDate: product.expiryDate, manufacturingDate: product.manufacturingDate });
     setShowModal(true);
   };
 
@@ -79,13 +85,56 @@ const ProductForm = () => {
   };
 
   const generateBarcode = (id) => {
-    if (barcodeRef.current) {
-      JsBarcode(barcodeRef.current, id.toString(), {
+    const canvas = barcodeRefs.current[id];
+    if (canvas) {
+      JsBarcode(canvas, id.toString(), {
         format: "CODE128",
-        displayValue: true,
-        width: 2,
-        height: 40,
+        displayValue: false,
+        width: 1,
+        height: 20,
+        margin: 0,
       });
+    }
+  };
+
+  const generatePDFWithBarcodes = (product) => {
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'A4',
+    });
+
+    const canvas = barcodeRefs.current[product._id];
+    if (!canvas) return;
+
+    const imgData = canvas.toDataURL('image/png');
+
+    // Setting initial position
+    let yOffset = 10;
+
+    // Repeat the barcode based on quantity
+    for (let i = 0; i < product.quantity; i++) {
+      pdf.addImage(imgData, 'PNG', 10, yOffset, 40, 20);
+      pdf.text(product.name, 55, yOffset + 10);
+      yOffset += 25; // Increase Y position for the next barcode
+
+      // If the content exceeds the page height, add a new page
+      if (yOffset > 280) {
+        pdf.addPage();
+        yOffset = 10; // Reset Y position
+      }
+    }
+
+    pdf.save(`${product.name || 'barcode'}.pdf`);
+  };
+
+  const handleBarcodeScan = async (barcode) => {
+    try {
+      const response = await axios.get(`/api/products/barcode/${barcode}`);
+      setBarcodeInfo(response.data);
+    } catch (err) {
+      console.error('Error fetching product by barcode:', err);
+      toast.error('Barcode not found');
     }
   };
 
@@ -142,7 +191,14 @@ const ProductForm = () => {
         </div>
       </form>
 
-      <svg ref={barcodeRef}></svg>
+      {/* Show Expiry and Manufacturing Date after Barcode Scan */}
+      {barcodeInfo && (
+        <div className="alert alert-info mt-3">
+          <h5>Product Info</h5>
+          <p><strong>Manufacturing Date:</strong> {new Date(barcodeInfo.manufacturingDate).toLocaleDateString()}</p>
+          <p><strong>Expiry Date:</strong> {new Date(barcodeInfo.expiryDate).toLocaleDateString()}</p>
+        </div>
+      )}
 
       <h3 className="text-center mt-5 mb-3">📦 Product List</h3>
       <table className="table table-bordered table-hover">
@@ -151,6 +207,7 @@ const ProductForm = () => {
             <th>Name</th>
             <th>Quantity</th>
             <th>Price (₹)</th>
+            <th style={{ width: '140px' }}>Barcode</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -161,7 +218,23 @@ const ProductForm = () => {
               <td>{p.quantity}</td>
               <td>{p.price}</td>
               <td>
-                <div className="d-flex flex-wrap gap-1">
+                <canvas
+                  ref={(el) => (barcodeRefs.current[p._id] = el)}
+                  style={{
+                    maxWidth: '100%',
+                    transform: 'scale(0.85)',
+                    transformOrigin: 'left center',
+                  }}
+                />
+                <button
+                  className="btn btn-outline-success btn-sm mt-1"
+                  onClick={() => generatePDFWithBarcodes(p)}
+                >
+                  📄 PDF
+                </button>
+              </td>
+              <td>
+                <div className="d-flex gap-1">
                   <button
                     className="btn btn-warning btn-sm"
                     onClick={() => handleEdit(p)}
@@ -214,6 +287,26 @@ const ProductForm = () => {
               className="form-control"
               name="price"
               value={editForm.price}
+              onChange={handleEditChange}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Expiry Date</label>
+            <input
+              type="date"
+              className="form-control"
+              name="expiryDate"
+              value={editForm.expiryDate}
+              onChange={handleEditChange}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Manufacturing Date</label>
+            <input
+              type="date"
+              className="form-control"
+              name="manufacturingDate"
+              value={editForm.manufacturingDate}
               onChange={handleEditChange}
             />
           </div>

@@ -1,6 +1,8 @@
 import React, { forwardRef } from 'react';
 
-const InvoicePreview = forwardRef(({ customer = {}, saleItems = [], products = [], invoiceNo = '',totalAmount = 0  }, ref) => {
+import qrCodeBase64 from '../components/assets/img.jpeg'
+
+const InvoicePreview = forwardRef(({ customer = {}, saleItems = [], products = [], invoiceNo = '', totalAmount = 0 }, ref) => {
   const total = saleItems.reduce((sum, item) => {
     const product = products.find(p => p._id === item.product);
     return sum + (product?.price || 0) * item.quantity;
@@ -9,12 +11,16 @@ const InvoicePreview = forwardRef(({ customer = {}, saleItems = [], products = [
   const currentDate = new Date().toLocaleDateString();
 
   return (
-    <div ref={ref} className="invoice-print border p-4 bg-white" style={{ width: '100%', fontFamily: 'Arial', color: '#000' }}>
+    <div
+      ref={ref}
+      className="invoice-print border p-4 bg-white d-flex flex-column"
+      style={{ width: '100%', fontFamily: 'Arial', color: '#000', minHeight: '850px' }}
+    >
       {/* Company Header */}
       <div className="text-center mb-4">
         <img src="/logo.png" alt="Bakery Logo" style={{ height: '80px' }} />
         <h3 className="mt-2">इंद्रायणी बेकर्स, स्वीट्स अँड बेकर्स</h3>
-        <p>123 Main Street, Sangli | Contact: 9209312828</p>
+        <p>Indrayani Backers Khanapur Road Vita 415311 | Contact:9146006006</p>
         <hr />
       </div>
 
@@ -30,7 +36,7 @@ const InvoicePreview = forwardRef(({ customer = {}, saleItems = [], products = [
         </div>
       </div>
 
-      {/* Table */}
+      {/* Product Table */}
       <table className="table table-bordered">
         <thead>
           <tr>
@@ -53,14 +59,26 @@ const InvoicePreview = forwardRef(({ customer = {}, saleItems = [], products = [
               </tr>
             );
           })}
-          <tr className="fw-bold">
-            <td colSpan="3">Total Amount</td>
-            <td>₹{total.toFixed(2)}</td>
-          </tr>
         </tbody>
       </table>
+      {/* Footer with QR Code */}
+      <div className="text-center mt-4">
+        <p><strong>Scan to Pay:</strong></p>
+        <img src={qrCodeBase64} alt="QR Code for Payment" style={{ height: '180px' }} />
+        <p className="mt-2">Google Pay / PhonePe / Paytm UPI ID: 9860346969@okbizaxis</p>
+      </div>
 
-      <p className="text-center mt-4">Thank you for shopping with us!</p>
+      {/* Spacer */}
+      <div style={{ flexGrow: 1 }} />
+
+      {/* Total */}
+      <div className="text-end mt-3">
+        <h5><strong>Total Amount: ₹{total.toFixed(2)}</strong></h5>
+      </div>
+
+      
+
+      <p className="text-center mt-3">Thank you for shopping with us!</p>
     </div>
   );
 });

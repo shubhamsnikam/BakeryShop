@@ -11,11 +11,20 @@ const app = express();
 
 // ✅ Enable CORS for development & production
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://client3-ftri.onrender.com'], // ← update with your actual frontend domain when deployed
+  origin: [
+    'http://localhost:3000',
+    'https://bakers-client.onrender.com'
+  ],
   credentials: true
 }));
 
+
 app.use(express.json());
+
+// ✅ Root route (to prevent 404 on base URL)
+app.get('/', (req, res) => {
+  res.send('Bakery Server is running ✅');
+});
 
 // ✅ API Routes
 app.use('/api/customers', require('./routes/customerRoutes'));
@@ -23,6 +32,11 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/sales', require('./routes/salesRoutes'));
 app.use('/api/ledger', require('./routes/ledgerRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+
+// ✅ Catch-all 404 route
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
 // ✅ Server & DB Init
 const PORT = process.env.PORT || 5000;
@@ -38,5 +52,5 @@ mongoose.connect(MONGO_URI, {
   useUnifiedTopology: true
 }).then(() => {
   console.log('MongoDB connected');
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`Server Running on port ${PORT}`));
 }).catch(err => console.error('MongoDB connection error:', err));

@@ -16,8 +16,8 @@ function App() {
     <Router>
       <Navbar />
       <Routes>
-        
-        <Route path='/' element={<Dashboard/>} />
+
+        <Route path='/' element={<Dashboard />} />
         <Route path="/products" element={<ProductForm />} />
         <Route path="/sales" element={<SalesForm />} />
         <Route path="/customers" element={<CustomerForm />} />
@@ -27,6 +27,8 @@ function App() {
 
       <ToastContainer position="top-center" autoClose={2000} />
     </Router>
+
+
   );
 }
 

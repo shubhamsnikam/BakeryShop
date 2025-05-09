@@ -29,7 +29,7 @@ const Ledger = () => {
   // Group ledger entries by customer
   const groupByCustomer = (data) => {
     const grouped = data.reduce((acc, entry) => {
-      if (!acc[entry.customer._id]) {
+      if (entry.customer && entry.customer._id && !acc[entry.customer._id]) {
         acc[entry.customer._id] = entry;
       }
       return acc;
@@ -182,7 +182,7 @@ const Ledger = () => {
       {loading ? (
         <p>Loading...</p>
       ) : filteredData.length === 0 ? (
-        <p>No pending Data Available.</p>
+        <p>No pending Data Available. </p>
       ) : (
         filteredData.map((entry, index) => (
           <div key={index} className="card mb-3 shadow">
